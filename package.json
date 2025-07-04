@@ -1,0 +1,16 @@
+{
+  "name": "sql-practice-app",
+  "version": "1.0.0",
+  "description": "Interactive SQL practice web application with database simulation and visual output",
+  "scripts": {
+    "install-all": "npm install && cd frontend && npm install && cd ../backend && npm install",
+    "start-frontend": "cd frontend && npm start",
+    "start-backend": "cd backend && npm start",
+    "start": "concurrently \"npm run start-backend\" \"npm run start-frontend\"",
+    "dev": "concurrently \"cd backend && npm run dev\" \"cd frontend && npm start\"",
+    "build": "cd frontend && npm run build"
+  },
+  "dependencies": {
+    "concurrently": "^8.2.0"
+  }
+}

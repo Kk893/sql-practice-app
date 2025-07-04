@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SQL Practice App</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      background-color: #f8fafc;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+    .container {
+      max-width: 800px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      padding: 2rem;
+    }
+    h1 {
+      color: #0078ff;
+      margin-top: 0;
+    }
+    p {
+      line-height: 1.6;
+      color: #64748b;
+    }
+    .code {
+      background-color: #f1f5f9;
+      padding: 1rem;
+      border-radius: 4px;
+      font-family: 'Courier New', Courier, monospace;
+      margin: 1rem 0;
+      text-align: left;
+    }
+    .btn {
+      display: inline-block;
+      background-color: #0078ff;
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      text-decoration: none;
+      font-weight: 500;
+      margin-top: 1rem;
+    }
+    .btn:hover {
+      background-color: #0057b8;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>SQL Practice App API</h1>
+    <p>This is the backend API for the SQL Practice App. To use the full application, make sure both the frontend and backend are running.</p>
+    
+    <h2>Available Endpoints:</h2>
+    <div class="code">
+      <p>POST /api/execute-sql - Execute SQL queries</p>
+      <p>GET /api/schema - Get database schema information</p>
+    </div>
+    
+    <h2>Example Usage:</h2>
+    <div class="code">
+      <p>// Execute a SQL query</p>
+      <p>fetch('http://localhost:5000/api/execute-sql', {</p>
+      <p>  method: 'POST',</p>
+      <p>  headers: { 'Content-Type': 'application/json' },</p>
+      <p>  body: JSON.stringify({ query: 'SELECT * FROM users LIMIT 10' })</p>
+      <p>})</p>
+      <p>.then(response => response.json())</p>
+      <p>.then(data => console.log(data));</p>
+    </div>
+    
+    <p>For a better experience, use the frontend application at <a href="http://localhost:3000">http://localhost:3000</a></p>
+    
+    <a href="http://localhost:3000" class="btn">Go to Frontend App</a>
+  </div>
+</body>
+</html>
