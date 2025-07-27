@@ -10,7 +10,7 @@ const SchemaViewer = () => {
   useEffect(() => {
     const fetchSchema = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/schema');
+        const response = await fetch('/api/schema');
         if (!response.ok) {
           throw new Error('Failed to fetch database schema');
         }
