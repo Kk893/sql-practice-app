@@ -45,7 +45,7 @@ function App() {
     setError(null);
     
     try {
-      const response = await fetch('/api/execute-sql', {
+      const response = await fetch('https://sql-app-ry1b.onrender.com/api/execute-sql', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
