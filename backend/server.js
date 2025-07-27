@@ -2,7 +2,6 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const path = require('path');
-const Database = require('better-sqlite3');
 
 // Initialize the app
 const app = express();
@@ -14,16 +13,162 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Initialize SQLite database
-let db;
-try {
-  db = new Database(':memory:'); // In-memory database
-  console.log('Connected to SQLite database (in-memory)');
+// In-memory database simulation
+let database = {
+  users: [],
+  categories: [],
+  products: [],
+  departments: [],
+  employees: [],
+  orders: [],
+  order_items: []
+};
+
+// Initialize database with sample data
+function initializeDatabase() {
+  console.log('Initializing in-memory database with sample data...');
   
-  // Initialize database with tables and data
-  initializeDatabase(db);
-} catch (err) {
-  console.error('Error connecting to SQLite database:', err.message);
+  // Categories
+  database.categories = [
+    { id: 1, name: 'Electronics' },
+    { id: 2, name: 'Clothing' },
+    { id: 3, name: 'Books' },
+    { id: 4, name: 'Home & Kitchen' },
+    { id: 5, name: 'Sports & Outdoors' }
+  ];
+  
+  // Users
+  for (let i = 1; i <= 50; i++) {
+    const age = 18 + Math.floor(Math.random() * 50);
+    database.users.push({
+      id: i,
+      name: `User ${i}`,
+      email: `user${i}@example.com`,
+      age: age,
+      created_at: new Date().toISOString()
+    });
+  }
+  
+  // Products
+  for (let i = 1; i <= 100; i++) {
+    const categoryId = 1 + Math.floor(Math.random() * 5);
+    const price = (10 + Math.random() * 990).toFixed(2);
+    database.products.push({
+      id: i,
+      name: `Product ${i}`,
+      description: `Description for product ${i}`,
+      price: parseFloat(price),
+      category_id: categoryId,
+      created_at: new Date().toISOString()
+    });
+  }
+  
+  // Departments
+  database.departments = [
+    { id: 1, name: 'Engineering', location: 'Building A' },
+    { id: 2, name: 'Marketing', location: 'Building B' },
+    { id: 3, name: 'Sales', location: 'Building C' },
+    { id: 4, name: 'Human Resources', location: 'Building A' },
+    { id: 5, name: 'Customer Support', location: 'Building D' }
+  ];
+  
+  // Employees
+  for (let i = 1; i <= 50; i++) {
+    const departmentId = 1 + Math.floor(Math.random() * 5);
+    const salary = (30000 + Math.random() * 70000).toFixed(2);
+    database.employees.push({
+      id: i,
+      name: `Employee ${i}`,
+      email: `employee${i}@example.com`,
+      department_id: departmentId,
+      salary: parseFloat(salary),
+      hire_date: new Date().toISOString()
+    });
+  }
+  
+  // Orders
+  const statuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+  for (let i = 1; i <= 200; i++) {
+    const userId = 1 + Math.floor(Math.random() * 50);
+    const status = statuses[Math.floor(Math.random() * statuses.length)];
+    const totalAmount = (50 + Math.random() * 450).toFixed(2);
+    
+    database.orders.push({
+      id: i,
+      user_id: userId,
+      order_date: new Date().toISOString(),
+      status: status,
+      total_amount: parseFloat(totalAmount)
+    });
+    
+    // Add order items
+    const itemCount = 1 + Math.floor(Math.random() * 5);
+    for (let j = 0; j < itemCount; j++) {
+      const productId = 1 + Math.floor(Math.random() * 100);
+      const quantity = 1 + Math.floor(Math.random() * 5);
+      const price = (10 + Math.random() * 190).toFixed(2);
+      
+      database.order_items.push({
+        id: database.order_items.length + 1,
+        order_id: i,
+        product_id: productId,
+        quantity: quantity,
+        price: parseFloat(price)
+      });
+    }
+  }
+  
+  console.log('Database initialized with sample data!');
+  console.log(`Initialized with: ${database.users.length} users, ${database.products.length} products, ${database.orders.length} orders, ${database.employees.length} employees`);
+}
+
+// Simple SQL parser for basic SELECT queries
+function executeQuery(query) {
+  const trimmedQuery = query.trim().toLowerCase();
+  
+  // Handle simple SELECT * FROM table queries
+  if (trimmedQuery.startsWith('select * from users')) {
+    return database.users;
+  } else if (trimmedQuery.startsWith('select * from categories')) {
+    return database.categories;
+  } else if (trimmedQuery.startsWith('select * from products')) {
+    return database.products;
+  } else if (trimmedQuery.startsWith('select * from departments')) {
+    return database.departments;
+  } else if (trimmedQuery.startsWith('select * from employees')) {
+    return database.employees;
+  } else if (trimmedQuery.startsWith('select * from orders')) {
+    return database.orders;
+  } else if (trimmedQuery.startsWith('select * from order_items')) {
+    return database.order_items;
+  }
+  
+  // Handle simple WHERE clauses
+  if (trimmedQuery.includes('where')) {
+    if (trimmedQuery.includes('users') && trimmedQuery.includes('age >')) {
+      const ageMatch = query.match(/age\s*>\s*(\d+)/i);
+      if (ageMatch) {
+        const minAge = parseInt(ageMatch[1]);
+        return database.users.filter(user => user.age > minAge);
+      }
+    }
+  }
+  
+  // Handle LIMIT
+  if (trimmedQuery.includes('limit')) {
+    const limitMatch = query.match(/limit\s+(\d+)/i);
+    if (limitMatch) {
+      const limit = parseInt(limitMatch[1]);
+      if (trimmedQuery.includes('users')) {
+        return database.users.slice(0, limit);
+      } else if (trimmedQuery.includes('products')) {
+        return database.products.slice(0, limit);
+      }
+    }
+  }
+  
+  // Default: return users for any unrecognized query
+  return database.users.slice(0, 10);
 }
 
 // API endpoint to execute SQL queries
@@ -45,40 +190,23 @@ app.post('/api/execute-sql', (req, res) => {
     const startTime = performance.now();
     
     // Execute the query
-    let result;
-    if (query.trim().toLowerCase().startsWith('select') || query.trim().toLowerCase().startsWith('pragma')) {
-      // For SELECT queries, return the rows
-      result = db.prepare(query).all();
-      
-      // Extract column names from the first row
-      const columns = result.length > 0 ? Object.keys(result[0]) : [];
-      
-      // Convert to format expected by frontend
-      const formattedResult = {
-        columns,
-        rows: result,
-        metadata: {
-          executionTime: Math.round(performance.now() - startTime),
-          // In a real app, you'd determine highlighted rows/cells based on the query
-          highlightedRows: [],
-          highlightedCells: []
-        }
-      };
-      
-      return res.json(formattedResult);
-    } else {
-      // For non-SELECT queries (e.g., INSERT, UPDATE)
-      result = db.prepare(query).run();
-      
-      return res.json({
-        columns: ['Result'],
-        rows: [{ Result: `Query executed successfully. ${result.changes} row(s) affected.` }],
-        metadata: {
-          executionTime: Math.round(performance.now() - startTime),
-          changes: result.changes
-        }
-      });
-    }
+    const result = executeQuery(query);
+    
+    // Extract column names from the first row
+    const columns = result.length > 0 ? Object.keys(result[0]) : [];
+    
+    // Convert to format expected by frontend
+    const formattedResult = {
+      columns,
+      rows: result,
+      metadata: {
+        executionTime: Math.round(performance.now() - startTime),
+        highlightedRows: [],
+        highlightedCells: []
+      }
+    };
+    
+    return res.json(formattedResult);
   } catch (err) {
     console.error('Error executing query:', err.message);
     return res.status(400).json({ error: err.message });
@@ -88,38 +216,86 @@ app.post('/api/execute-sql', (req, res) => {
 // API endpoint to get database schema
 app.get('/api/schema', (req, res) => {
   try {
-    const schema = {};
-    
-    // Get all tables
-    const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'").all();
-    
-    schema.tables = {};
-    
-    // For each table, get its columns and foreign keys
-    tables.forEach(table => {
-      const tableName = table.name;
-      
-      // Get columns
-      const columns = db.prepare(`PRAGMA table_info(${tableName})`).all();
-      
-      // Get foreign keys
-      const foreignKeys = db.prepare(`PRAGMA foreign_key_list(${tableName})`).all();
-      
-      schema.tables[tableName] = {
-        columns: columns.map(col => ({
-          name: col.name,
-          type: col.type,
-          isPrimary: col.pk === 1
-        })),
-        foreignKeys: foreignKeys.map(fk => ({
-          column: fk.from,
-          reference: {
-            table: fk.table,
-            column: fk.to
-          }
-        }))
-      };
-    });
+    const schema = {
+      tables: {
+        users: {
+          columns: [
+            { name: 'id', type: 'INTEGER', isPrimary: true },
+            { name: 'name', type: 'TEXT', isPrimary: false },
+            { name: 'email', type: 'TEXT', isPrimary: false },
+            { name: 'age', type: 'INTEGER', isPrimary: false },
+            { name: 'created_at', type: 'TIMESTAMP', isPrimary: false }
+          ],
+          foreignKeys: []
+        },
+        categories: {
+          columns: [
+            { name: 'id', type: 'INTEGER', isPrimary: true },
+            { name: 'name', type: 'TEXT', isPrimary: false }
+          ],
+          foreignKeys: []
+        },
+        products: {
+          columns: [
+            { name: 'id', type: 'INTEGER', isPrimary: true },
+            { name: 'name', type: 'TEXT', isPrimary: false },
+            { name: 'description', type: 'TEXT', isPrimary: false },
+            { name: 'price', type: 'REAL', isPrimary: false },
+            { name: 'category_id', type: 'INTEGER', isPrimary: false },
+            { name: 'created_at', type: 'TIMESTAMP', isPrimary: false }
+          ],
+          foreignKeys: [
+            { column: 'category_id', reference: { table: 'categories', column: 'id' } }
+          ]
+        },
+        departments: {
+          columns: [
+            { name: 'id', type: 'INTEGER', isPrimary: true },
+            { name: 'name', type: 'TEXT', isPrimary: false },
+            { name: 'location', type: 'TEXT', isPrimary: false }
+          ],
+          foreignKeys: []
+        },
+        employees: {
+          columns: [
+            { name: 'id', type: 'INTEGER', isPrimary: true },
+            { name: 'name', type: 'TEXT', isPrimary: false },
+            { name: 'email', type: 'TEXT', isPrimary: false },
+            { name: 'department_id', type: 'INTEGER', isPrimary: false },
+            { name: 'salary', type: 'REAL', isPrimary: false },
+            { name: 'hire_date', type: 'TIMESTAMP', isPrimary: false }
+          ],
+          foreignKeys: [
+            { column: 'department_id', reference: { table: 'departments', column: 'id' } }
+          ]
+        },
+        orders: {
+          columns: [
+            { name: 'id', type: 'INTEGER', isPrimary: true },
+            { name: 'user_id', type: 'INTEGER', isPrimary: false },
+            { name: 'order_date', type: 'TIMESTAMP', isPrimary: false },
+            { name: 'status', type: 'TEXT', isPrimary: false },
+            { name: 'total_amount', type: 'REAL', isPrimary: false }
+          ],
+          foreignKeys: [
+            { column: 'user_id', reference: { table: 'users', column: 'id' } }
+          ]
+        },
+        order_items: {
+          columns: [
+            { name: 'id', type: 'INTEGER', isPrimary: true },
+            { name: 'order_id', type: 'INTEGER', isPrimary: false },
+            { name: 'product_id', type: 'INTEGER', isPrimary: false },
+            { name: 'quantity', type: 'INTEGER', isPrimary: false },
+            { name: 'price', type: 'REAL', isPrimary: false }
+          ],
+          foreignKeys: [
+            { column: 'order_id', reference: { table: 'orders', column: 'id' } },
+            { column: 'product_id', reference: { table: 'products', column: 'id' } }
+          ]
+        }
+      }
+    };
     
     return res.json(schema);
   } catch (err) {
@@ -130,182 +306,12 @@ app.get('/api/schema', (req, res) => {
 
 // Function to check if a query contains harmful operations
 function isHarmfulQuery(query) {
-  const harmful = /\\b(drop|delete|truncate|alter\\s+table|pragma\\s+writable_schema)\\b/i;
+  const harmful = /\b(drop|delete|truncate|alter\s+table|pragma\s+writable_schema)\b/i;
   return harmful.test(query);
 }
 
-// Function to initialize the database with tables and sample data
-function initializeDatabase(db) {
-  console.log('Initializing database with tables and sample data...');
-  
-  // Enable foreign keys
-  db.pragma('foreign_keys = ON');
-  
-  // Create tables
-  db.exec(`
-    -- Users table
-    CREATE TABLE users (
-      id INTEGER PRIMARY KEY,
-      name TEXT NOT NULL,
-      email TEXT UNIQUE NOT NULL,
-      age INTEGER,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-    
-    -- Categories table
-    CREATE TABLE categories (
-      id INTEGER PRIMARY KEY,
-      name TEXT NOT NULL
-    );
-    
-    -- Products table
-    CREATE TABLE products (
-      id INTEGER PRIMARY KEY,
-      name TEXT NOT NULL,
-      description TEXT,
-      price REAL NOT NULL,
-      category_id INTEGER,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (category_id) REFERENCES categories(id)
-    );
-    
-    -- Orders table
-    CREATE TABLE orders (
-      id INTEGER PRIMARY KEY,
-      user_id INTEGER NOT NULL,
-      order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      status TEXT DEFAULT 'pending',
-      total_amount REAL NOT NULL,
-      FOREIGN KEY (user_id) REFERENCES users(id)
-    );
-    
-    -- Order items table
-    CREATE TABLE order_items (
-      id INTEGER PRIMARY KEY,
-      order_id INTEGER NOT NULL,
-      product_id INTEGER NOT NULL,
-      quantity INTEGER NOT NULL,
-      price REAL NOT NULL,
-      FOREIGN KEY (order_id) REFERENCES orders(id),
-      FOREIGN KEY (product_id) REFERENCES products(id)
-    );
-    
-    -- Departments table
-    CREATE TABLE departments (
-      id INTEGER PRIMARY KEY,
-      name TEXT NOT NULL,
-      location TEXT
-    );
-    
-    -- Employees table
-    CREATE TABLE employees (
-      id INTEGER PRIMARY KEY,
-      name TEXT NOT NULL,
-      email TEXT UNIQUE NOT NULL,
-      department_id INTEGER,
-      salary REAL,
-      hire_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (department_id) REFERENCES departments(id)
-    );
-  `);
-  
-  // Insert sample data
-  // Categories
-  const categories = [
-    { name: 'Electronics' },
-    { name: 'Clothing' },
-    { name: 'Books' },
-    { name: 'Home & Kitchen' },
-    { name: 'Sports & Outdoors' }
-  ];
-  
-  const insertCategory = db.prepare('INSERT INTO categories (name) VALUES (?)');
-  categories.forEach(category => {
-    insertCategory.run(category.name);
-  });
-  
-  // Users (50 sample users)
-  const insertUser = db.prepare('INSERT INTO users (name, email, age) VALUES (?, ?, ?)');
-  for (let i = 1; i <= 50; i++) {
-    const age = 18 + Math.floor(Math.random() * 50); // Random age between 18-67
-    insertUser.run(`User ${i}`, `user${i}@example.com`, age);
-  }
-  
-  // Products (100 sample products)
-  const insertProduct = db.prepare('INSERT INTO products (name, description, price, category_id) VALUES (?, ?, ?, ?)');
-  for (let i = 1; i <= 100; i++) {
-    const categoryId = 1 + Math.floor(Math.random() * 5); // Random category 1-5
-    const price = (10 + Math.random() * 990).toFixed(2); // Random price between 10-1000
-    insertProduct.run(
-      `Product ${i}`, 
-      `Description for product ${i}`, 
-      price, 
-      categoryId
-    );
-  }
-  
-  // Departments
-  const departments = [
-    { name: 'Engineering', location: 'Building A' },
-    { name: 'Marketing', location: 'Building B' },
-    { name: 'Sales', location: 'Building C' },
-    { name: 'Human Resources', location: 'Building A' },
-    { name: 'Customer Support', location: 'Building D' }
-  ];
-  
-  const insertDepartment = db.prepare('INSERT INTO departments (name, location) VALUES (?, ?)');
-  departments.forEach(dept => {
-    insertDepartment.run(dept.name, dept.location);
-  });
-  
-  // Employees (50 sample employees)
-  const insertEmployee = db.prepare('INSERT INTO employees (name, email, department_id, salary) VALUES (?, ?, ?, ?)');
-  for (let i = 1; i <= 50; i++) {
-    const departmentId = 1 + Math.floor(Math.random() * 5); // Random department 1-5
-    const salary = (30000 + Math.random() * 70000).toFixed(2); // Random salary between 30k-100k
-    insertEmployee.run(
-      `Employee ${i}`, 
-      `employee${i}@example.com`, 
-      departmentId, 
-      salary
-    );
-  }
-  
-  // Orders (200 sample orders)
-  const insertOrder = db.prepare('INSERT INTO orders (user_id, status, total_amount) VALUES (?, ?, ?)');
-  const insertOrderItem = db.prepare('INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)');
-  
-  const statuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
-  
-  for (let i = 1; i <= 200; i++) {
-    const userId = 1 + Math.floor(Math.random() * 50); // Random user 1-50
-    const status = statuses[Math.floor(Math.random() * statuses.length)];
-    const totalAmount = (50 + Math.random() * 450).toFixed(2); // Random total between 50-500
-    
-    const result = insertOrder.run(userId, status, totalAmount);
-    const orderId = result.lastInsertRowid;
-    
-    // Add 1-5 items to each order
-    const itemCount = 1 + Math.floor(Math.random() * 5);
-    for (let j = 0; j < itemCount; j++) {
-      const productId = 1 + Math.floor(Math.random() * 100); // Random product 1-100
-      const quantity = 1 + Math.floor(Math.random() * 5); // Random quantity 1-5
-      const price = (10 + Math.random() * 190).toFixed(2); // Random price between 10-200
-      
-      insertOrderItem.run(orderId, productId, quantity, price);
-    }
-  }
-  
-  console.log('Database initialized with sample data!');
-  
-  // Verify data count
-  const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get().count;
-  const productCount = db.prepare('SELECT COUNT(*) as count FROM products').get().count;
-  const orderCount = db.prepare('SELECT COUNT(*) as count FROM orders').get().count;
-  const employeeCount = db.prepare('SELECT COUNT(*) as count FROM employees').get().count;
-  
-  console.log(`Initialized with: ${userCount} users, ${productCount} products, ${orderCount} orders, ${employeeCount} employees`);
-}
+// Initialize database
+initializeDatabase();
 
 // Start the server
 app.listen(PORT, () => {
