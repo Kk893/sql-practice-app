@@ -70,7 +70,7 @@
     <h2>Example Usage:</h2>
     <div class="code">
       <p>// Execute a SQL query</p>
-      <p>fetch('http://localhost:5000/api/execute-sql', {</p>
+      <p>fetch('/api/execute-sql', {</p>
       <p>  method: 'POST',</p>
       <p>  headers: { 'Content-Type': 'application/json' },</p>
       <p>  body: JSON.stringify({ query: 'SELECT * FROM users LIMIT 10' })</p>
@@ -79,9 +79,9 @@
       <p>.then(data => console.log(data));</p>
     </div>
     
-    <p>For a better experience, use the frontend application at <a href="http://localhost:3000">http://localhost:3000</a></p>
+    <p>For a better experience, use the frontend application at <a href="https://sql-app-frontend.onrender.com">https://sql-app-frontend.onrender.com</a></p>
     
-    <a href="http://localhost:3000" class="btn">Go to Frontend App</a>
+    <a href="https://sql-app-frontend.onrender.com" class="btn">Go to Frontend App</a>
   </div>
 </body>
 </html>
