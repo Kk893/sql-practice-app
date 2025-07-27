@@ -139,3 +139,16 @@ sql-practice-app/
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🔗 Live Website
+
+<a href="https://sql-app-frontend.onrender.com/" target="_blank">
+  <img src="https://img.shields.io/badge/Live-Demo-blue?style=for-the-badge&logo=google-chrome" alt="Live Demo Button"/>
+</a>
+
+## 🔗 Live Website(work not properly)
+
+<a href="https://sqlapp.work.gd" target="_blank">
+  <img src="https://img.shields.io/badge/Live-Demo-blue?style=for-the-badge&logo=google-chrome" alt="Live Demo Button"/>
+</a>
+
